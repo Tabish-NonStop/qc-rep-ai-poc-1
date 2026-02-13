@@ -1,4 +1,3 @@
-#!usr/bin/env nextflow
 nextflow.enable.dsl=2
 
 process MULTIQC {
@@ -7,16 +6,23 @@ process MULTIQC {
     publishDir "${params.outdir}/multiqc", mode: 'copy'
     
     input:
-    path fastqc_reports
+    path fastqc_dirs
 
     output:
-    path "multiqc_report.html"
-    path "multiqc_data"
+    tuple path("multiqc_report.html"),
+          path("multiqc_data"),
+          path("multiqc_data/multiqc_data.json")
 
     script:
     """
-    echo "Running MultiQC on FASTQC reports"
-    multiqc .
-    echo "MultiQC report generated"
+    set -euo pipefail
+    
+    echo "Running MultiQC on FASTQC directories"
+    ls -la ${fastqc_dirs} || true
+    multiqc ${fastqc_dirs} -o .
+    
+    test -s multiqc_data/multiqc_data.json
+
+    echo "MultiQC done"
     """
 }
