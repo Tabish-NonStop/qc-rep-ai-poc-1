@@ -4,7 +4,6 @@ nextflow.enable.dsl=2
 process LLM_INFER {
 
   publishDir "${params.outdir}/llm_response", mode: 'copy'
-
   container 'python:3.11-slim'
 
   input:
@@ -12,6 +11,7 @@ process LLM_INFER {
 
   output:
   path "llm_response.json"
+  path "response.html"
 
   script:
   """
@@ -24,14 +24,22 @@ process LLM_INFER {
   model = os.environ.get("OLLAMA_MODEL", "qwen2.5:7b")
   url   = os.environ.get("OLLAMA_URL", "http://host.docker.internal:11434/api/generate")
 
-  prompt_path = "${prompt_file}"
-  with open(prompt_path, "r", encoding="utf-8", errors="replace") as f:
-      prompt = f.read()
+  system_prompt = os.environ.get(
+      "LLM_SYSTEM_PROMPT",
+      "You are an expert bioinformatics QC analyst. Return ONLY one complete HTML file (including <!doctype html>, <html>, <head>, <style>, <body>, and optional <script>). No markdown. No backticks. No extra text."
+  )
+
+  with open("${prompt_file}", "r", encoding="utf-8", errors="replace") as f:
+      user_prompt = f.read()
 
   payload = {
     "model": model,
-    "prompt": prompt,
-    "stream": False
+    "system": system_prompt,
+    "prompt": user_prompt + "\\n\\nReturn ONLY the HTML document. End exactly with </html>.",
+    "stream": False,
+    "options": {
+      "stop": ["</html>"]
+    }
   }
 
   req = urllib.request.Request(
@@ -44,11 +52,25 @@ process LLM_INFER {
   with urllib.request.urlopen(req) as resp:
       data = json.loads(resp.read().decode("utf-8"))
 
-  # Save full raw response (includes timings + context)
+  # Save raw response JSON
   with open("llm_response.json", "w", encoding="utf-8") as f:
       json.dump(data, f, indent=2, ensure_ascii=False)
 
-  print("Saved llm_response.json")
+  # Extract HTML into a file
+  html = data.get("response", "")
+  html = html.strip()
+  if not html.lower().startswith("<!doctype html"):
+      # If model omits doctype, still write it, but prepend for a valid file
+      html = "<!doctype html>\\n" + html
+
+  # Ensure stop token is included (since stop cuts it off)
+  if not html.lower().endswith("</html>"):
+      html = html + "\\n</html>\\n"
+
+  with open("response.html", "w", encoding="utf-8") as f:
+      f.write(html)
+
+  print("Saved llm_response.json and response.html")
   PY
   """
 }
