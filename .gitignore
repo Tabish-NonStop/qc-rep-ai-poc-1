@@ -3,3 +3,5 @@ results/
 .nextflow/
 data/
 .nextflow.*
+.env
+.venv
