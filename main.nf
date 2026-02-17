@@ -8,6 +8,7 @@ include { MULTIQC }        from './modules/multiqc/main.nf'
 include { FASTQ_HEADER }   from './modules/fastq_header/main.nf'
 include { PROMPT_BUILDER } from './modules/prompt_builder/main.nf'
 include { LLM_INFER }      from './modules/llm_infer/main.nf'
+include { EMBED_LLM }      from './modules/embed_llm/main.nf'
 
 workflow {
 
@@ -30,6 +31,8 @@ workflow {
 
   // Grab multiqc_data.json from MULTIQC outputs
   multiqc_json_ch = multiqc_out_ch.map { report_html, data_dir, json_file -> json_file }
+  multiqc_html_ch = multiqc_out_ch.map { report_html, data_dir, json_file -> report_html }
+
 
   // Build a single prompt.txt
   prompt_ch = PROMPT_BUILDER(
@@ -39,6 +42,8 @@ workflow {
     multiqc_json_ch
   )
 
-  // Send prompt.txt to Ollama and save response
   LLM_INFER(prompt_ch)
+
+  EMBED_LLM(multiqc_html_ch, LLM_INFER.out)
+
 }
