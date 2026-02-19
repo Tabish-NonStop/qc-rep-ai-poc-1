@@ -88,6 +88,7 @@ process PROMPT_BUILDER {
   parts.append("## TASK")
   parts.append(
       "You are a Genomics Sequencing Expert who understands different sequencing files and genomic pipelines. Use the provided FastQC + MultiQC outputs to:\\n"
+      "You reply only in plain text. No .md format\\n"
       "1) List issues ranked by severity\\n"
       "2) Provide evidence (quote exact lines/fields)\\n"
       "3) Likely causes\\n"

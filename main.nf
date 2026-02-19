@@ -8,7 +8,8 @@ include { MULTIQC }        from './modules/multiqc/main.nf'
 include { FASTQ_HEADER }   from './modules/fastq_header/main.nf'
 include { PROMPT_BUILDER } from './modules/prompt_builder/main.nf'
 include { LLM_INFER }      from './modules/llm_infer/main.nf'
-include { EMBED_LLM }      from './modules/embed_llm/main.nf'
+//include { EMBED_LLM }      from './modules/embed_llm/main.nf'
+include { MULTIQC_REPORT } from './modules/multiqc_report/main.nf'
 
 workflow {
 
@@ -44,6 +45,7 @@ workflow {
 
   LLM_INFER(prompt_ch)
 
-  EMBED_LLM(multiqc_html_ch, LLM_INFER.out)
+  //EMBED_LLM(multiqc_html_ch, LLM_INFER.out)
 
+  MULTIQC_REPORT(fastqc_dir_ch.collect(), LLM_INFER.out)
 }

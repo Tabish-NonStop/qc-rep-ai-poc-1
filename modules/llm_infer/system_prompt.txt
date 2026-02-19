@@ -81,4 +81,4 @@ What to verify after the pipeline runs:
 - Any other experiment-specific metrics
 State the acceptable range and what to do if results fall outside it.
 
-# OUTPUT Format: STRICT HTML DIV. Must start with <div> and end with </div> in .txt format. Only include the summary.
+# OUTPUT Format: PLAIN TEXT. NO MD format.
